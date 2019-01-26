@@ -1,6 +1,9 @@
+'use strict'
+
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
+var secretInfo;
 
 http.createServer(function (request, response) {
 	console.log('Received request for ' + request.url + " via " + request.method);
@@ -9,7 +12,7 @@ http.createServer(function (request, response) {
 		handleGET(pathname, response);
 	}
 	else if (request.method === 'POST') {
-		handlePOST(pathname, response)
+		handlePOST(request, response, pathname)
 	}
 }).listen(8080);
 
@@ -34,24 +37,30 @@ function handleGET(pathname, response) {
 
 // We only handle on post request: temps
 // This will return a JSON object of all the temps at the assumed location
-function handlePOST(command, response) {
-	response.writeHead(200, {'Content-Type': 'application/json'});
-	response.end({});
-	// if (command === "temps") {
-	// 	return {
-	// 		"C": 123,
-	// 		"F": 456,
-	// 		"K": 789,
-	// 		"5": "Y"
-	// 	}
-	// }
-	// else {
-	// 	return null;
-	// }
+function handlePOST(request, response, command) {
+	if (command === '/temps') {
+		request.on('data', () => {});
+		request.on('end', () => {
+			response.writeHead(200, {'Content-Type': 'application/json'});
+			// response.end(`{
+			// 	"C": 123,
+			// 	 "F": 456,
+			// 	 "K": 789,
+			// 	 "5": "Y"
+			// }`);
+			getTemps((data) => {
+				response.end(JSON.stringify(data));
+			});
+		});
+	}
+	else {
+		response.writeHead(404, {'Content-Type': 'text/html'});
+		response.end('Unknown POST request');
+	}
 }
 
 // Attempt to read 404.html in content folder
-// If error occurs, insult the user (even though it's probably my fault ;) )
+// If error occurs, insult the user, even though it's probably my fault ;)
 function send404(response) {
 	fs.readFile('./content/404.html', 'utf8', function(err, contents) {
 		if (err) {
@@ -61,6 +70,65 @@ function send404(response) {
 		else {
 			response.writeHead(404, {'Content-Type': 'text/html'});
 			response.end(contents);
+		}
+	});
+}
+
+// Call OpenWeatherMap API to grab current weather data
+function getTemps(callback) {
+	getSecretInfo((info) => {
+		let url = 'http://api.openweathermap.org/data/2.5/weather' + info;
+		console.log(url);
+		http.get(url, (response) => {
+			  let data = '';
+			response.on('data', (chunk) => {
+				data += chunk;
+			});
+			response.on('end', () => {
+				let json = JSON.parse(data);
+				let temps = getAllTempsFromK(json.main.temp);
+				callback(temps);
+			});
+		}).on("error", (error) => {
+			  console.log("Error: " + error.message);
+		});
+	});
+}
+
+// Do conversions from kelvin to all other scales of temperatures
+function getAllTempsFromK(k) {
+	let c = k - 273.15;
+	let f = k * 1.8 - 459.67
+	let r = k * 1.8;
+	let d = (373.15 - k) * 1.5
+	let n = (k - 273.15) * .33;
+	let re = (k - 273.15) * .8;
+	let ro = (k - 273.15) * .525 + 7.5;
+	return {
+		'kelvin' : k,
+		'celcius': c,
+		'fahrenheit': f,
+		'rankine': r,
+		'delisle': d,
+		'newton': n,
+		'réaumur': re,
+		'rømer': ro
+	};
+}
+
+// secretInfo includes API key and lat/long location. Get your own!
+function getSecretInfo(callback) {
+	if (secretInfo) {
+		callback(secretInfo);
+	}
+
+	fs.readFile('./secretInfo', 'utf8', function(err, contents) {
+		if (err) {
+			console.log(err);
+		}
+		else {
+			secretInfo = contents;
+			callback(secretInfo);
 		}
 	});
 }

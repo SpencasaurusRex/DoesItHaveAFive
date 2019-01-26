@@ -5,8 +5,7 @@ $(function(){
 });
 
 function loadTemperatures() {
-    // $.post("temps", function(data, status)
-    // {
-    //     alert("Data: " + data + "\nStatus: " + status);
-    // });
+    $.post("temps", function(data, status) {
+        
+    });
 }
