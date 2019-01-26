@@ -1,0 +1,29 @@
+h1 { 
+    font-family:Calibri,Candara,Segoe,Segoe UI,Optima,Arial,sans-serif; 
+    font-size:70px; 
+    font-weight:700; 
+    text-align:center;
+}
+table {
+    margin-left:auto;
+    margin-right:auto;
+    width:20%; 
+    margin-left:40%; 
+    margin-right:40%;
+}
+td {
+    font-family:Calibri,Candara,Segoe,Segoe UI,Optima,Arial,sans-serif; 
+    font-size:30px;
+}
+.valid {
+    background-color:#42f498;
+}
+body {
+    text-align:center;
+}
+.right {
+    text-align:right;
+}
+.left {
+    text-align:left;
+}

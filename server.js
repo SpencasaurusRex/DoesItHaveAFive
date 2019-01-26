@@ -18,6 +18,8 @@ http.createServer(function (request, response) {
 
 // For GET requests prepend ./content/ then grab and read out file. 
 // If file not found, read 404 page
+// TODO: The way I handle reading encoding and writing content-type back is super hacky
+// This should be improved in the future, but for a base project.. it works.
 function handleGET(pathname, response) {
 	// Reroute to index.html - Yes this is hacky, I know
 	if (pathname === '/') pathname = 'index.html';
@@ -29,7 +31,12 @@ function handleGET(pathname, response) {
 			console.log(err);
 		}
 		else {
-			response.writeHead(200, {'Content-Type': 'text/html'});
+			if (pathname.endsWith(".css")) {
+				response.writeHead(200, {'Content-Type': 'text/css'})
+			}
+			else {
+				response.writeHead(200, {'Content-Type': 'text/html'});
+			}
 			response.end(contents);
 		}
 	});
@@ -42,12 +49,6 @@ function handlePOST(request, response, command) {
 		request.on('data', () => {});
 		request.on('end', () => {
 			response.writeHead(200, {'Content-Type': 'application/json'});
-			// response.end(`{
-			// 	"C": 123,
-			// 	 "F": 456,
-			// 	 "K": 789,
-			// 	 "5": "Y"
-			// }`);
 			getTemps((data) => {
 				response.end(JSON.stringify(data));
 			});
@@ -78,7 +79,6 @@ function send404(response) {
 function getTemps(callback) {
 	getSecretInfo((info) => {
 		let url = 'http://api.openweathermap.org/data/2.5/weather' + info;
-		console.log(url);
 		http.get(url, (response) => {
 			  let data = '';
 			response.on('data', (chunk) => {
@@ -105,14 +105,14 @@ function getAllTempsFromK(k) {
 	let re = (k - 273.15) * .8;
 	let ro = (k - 273.15) * .525 + 7.5;
 	return {
-		'kelvin' : k,
-		'celcius': c,
-		'fahrenheit': f,
-		'rankine': r,
-		'delisle': d,
-		'newton': n,
-		'réaumur': re,
-		'rømer': ro
+		'Kelvin' : k.toFixed(2),
+		'Celcius': c.toFixed(2),
+		'Fahrenheit': f.toFixed(2),
+		'Rankine': r.toFixed(2),
+		'Delisle': d.toFixed(2),
+		'Newton': n.toFixed(2),
+		'Réaumur': re.toFixed(2),
+		'Rømer': ro.toFixed(2)
 	};
 }
 
